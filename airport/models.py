@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-
+from rest_framework.exceptions import ValidationError
 
 
 class Crew(models.Model):
@@ -44,27 +44,45 @@ class Flight(models.Model):
     class Meta:
         ordering = ("-departure_time", "-arrival_time")
 
+    def __str__(self):
+        return f"{self.departure_time} - {self.arrival_time}"
+
 class Route(models.Model):
     source = models.ForeignKey("Airport", on_delete=models.CASCADE, blank=True, related_name="routes_as_source")
     destination = models.ForeignKey("Airport", on_delete=models.CASCADE, blank=True, related_name="routes_as_destination")
     distance = models.IntegerField()
 
     def __str__(self):
-        return f"{self.source} - {self.destination}"
+        return f"{self.source.name} - {self.destination.closet_big_city}"
 
 class Airport(models.Model):
     name = models.CharField(max_length=50)
     closet_big_city = models.CharField(max_length=50)
 
     def __str__(self):
-        return self.name
-
+        return f"{self.name} {self.closet_big_city}"
 
 class Ticket(models.Model):
     row = models.IntegerField()
     seat = models.IntegerField()
     flight = models.ForeignKey("Flight", on_delete=models.CASCADE, blank=True, related_name="tickets")
     order = models.ForeignKey("Order", on_delete=models.CASCADE, blank=True, related_name="tickets")
+
+    @staticmethod
+    def validate_ticket(row, seat, airplane, error_to_raise):
+        for ticket_attr_value, ticket_attr_name, airplane_attr_name in [
+            (row, "row", "rows"),
+            (seat, "seat", "seats_in_row"),
+        ]:
+            count_attrs = getattr(airplane, airplane_attr_name)
+            if not (1 <= ticket_attr_value <= count_attrs):
+                raise error_to_raise(
+                    {
+                        ticket_attr_name: f"{ticket_attr_name} "
+                                          f"number must be in available range: "
+                                          f"(1, {count_attrs}))"
+                    }
+                )
 
     def __str__(self):
         return f"{self.row} - {self.seat} - {self.flight}"
@@ -74,9 +92,34 @@ class Ticket(models.Model):
         ordering = ("row", "seat")
 
 
+def clean(self):
+    if not (1 <= self.seat <= self.flight.airplane.seats_in_row):
+        raise ValidationError({
+            "seat": f"seat must be in range [1, {self.flight.airplane.seats_in_row}]"
+        })
+
+
+def save(
+        self,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None
+):
+    self.full_clean()
+    return super(Ticket, self).save(
+        force_insert,
+        force_update,
+        using,
+        update_fields
+    )
+
 class Order(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="orders")
 
     class Meta:
         ordering = ("created_time",)
+
+    def __str__(self):
+        return f"{self.created_time}"
