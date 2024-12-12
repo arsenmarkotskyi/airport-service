@@ -52,6 +52,10 @@ class Route(models.Model):
     destination = models.ForeignKey("Airport", on_delete=models.CASCADE, blank=True, related_name="routes_as_destination")
     distance = models.IntegerField()
 
+    def clean(self):
+        if self.source == self.destination:
+            raise ValidationError("Source and destination airports must be different")
+
     def __str__(self):
         return f"{self.source.name} - {self.destination.closet_big_city}"
 
@@ -68,8 +72,12 @@ class Ticket(models.Model):
     flight = models.ForeignKey("Flight", on_delete=models.CASCADE, blank=True, related_name="tickets")
     order = models.ForeignKey("Order", on_delete=models.CASCADE, blank=True, related_name="tickets")
 
+
     @staticmethod
     def validate_ticket(row, seat, airplane, error_to_raise):
+        if row is None or seat is None:
+            raise error_to_raise({"row": "Row and seat must not be None"})
+
         for ticket_attr_value, ticket_attr_name, airplane_attr_name in [
             (row, "row", "rows"),
             (seat, "seat", "seats_in_row"),
@@ -89,30 +97,29 @@ class Ticket(models.Model):
 
     class Meta:
         unique_together = (("row", "seat", "flight"),)
-        ordering = ("row", "seat")
+        ordering = ("row", "seat", "flight")
 
 
-def clean(self):
-    if not (1 <= self.seat <= self.flight.airplane.seats_in_row):
-        raise ValidationError({
-            "seat": f"seat must be in range [1, {self.flight.airplane.seats_in_row}]"
-        })
+    def clean(self):
+        if not (1 <= self.seat <= self.flight.airplane.seats_in_row):
+            raise ValidationError({
+                "seat": f"seat must be in range [1, {self.flight.airplane.seats_in_row}]"
+            })
 
 
-def save(
-        self,
-        force_insert=False,
-        force_update=False,
-        using=None,
-        update_fields=None
-):
-    self.full_clean()
-    return super(Ticket, self).save(
-        force_insert,
-        force_update,
-        using,
-        update_fields
-    )
+    def save(self,
+            force_insert=False,
+            force_update=False,
+            using=None,
+            update_fields=None
+    ):
+        self.full_clean()
+        return super(Ticket, self).save(
+            force_insert,
+            force_update,
+            using,
+            update_fields
+        )
 
 class Order(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
