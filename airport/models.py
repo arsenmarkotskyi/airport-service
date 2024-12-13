@@ -56,8 +56,8 @@ class Route(models.Model):
         if self.source == self.destination:
             raise ValidationError("Source and destination airports must be different")
 
-    def __str__(self):
-        return f"{self.source.name} - {self.destination.closet_big_city}"
+    # def __str__(self):
+    #     return f"{self.source.name} - {self.destination.closet_big_city}"
 
 class Airport(models.Model):
     name = models.CharField(max_length=50)
