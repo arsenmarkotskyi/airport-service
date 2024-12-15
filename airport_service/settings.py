@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "rest_framework",
+    "rest_framework.authtoken",
+
+    "drf_spectacular",
     "debug_toolbar",
     "airport",
     "user"
@@ -135,6 +140,26 @@ INTERNAL_IPS = [
 ]
 
 REST_FRAMEWORK = {
-   "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-   "PAGE_SIZE": 5
+    "DEFAULT_PERMISSION_CLASSES": [
+       "rest_framework.permissions.IsAuthenticated",
+   ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_THROTTLE_CLASSES": [
+       "rest_framework.throttling.AnonRateThrottle",
+       "rest_framework.throttling.UserRateThrottle"
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+       "anon": "3000/day",
+       "user": "3000/day"
+    }
 }
+
+SIMPLE_JWT = {
+   "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+   "REFRESH_TOKEN_LIFETIME": timedelta(days=70),
+   "ROTATE_REFRESH_TOKENS": True
+}
+
