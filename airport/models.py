@@ -7,6 +7,9 @@ class Crew(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
 
+    class Meta:
+        app_label = 'airport'
+
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -21,6 +24,9 @@ class Airplane(models.Model):
     seats_in_row = models.IntegerField()
     airplane_type = models.ForeignKey("AirplaneType", on_delete=models.CASCADE, related_name="airplanes")
 
+    class Meta:
+        app_label = 'airport'
+
     @property
     def capacity(self) -> int:
         return self.rows * self.seats_in_row
@@ -30,6 +36,9 @@ class Airplane(models.Model):
 
 class AirplaneType(models.Model):
     name = models.CharField(max_length=50)
+
+    class Meta:
+        app_label = 'airport'
 
     def __str__(self):
         return self.name
@@ -43,6 +52,8 @@ class Flight(models.Model):
 
     class Meta:
         ordering = ("-departure_time", "-arrival_time")
+        app_label = 'airport'
+
 
     def __str__(self):
         return f"{self.departure_time} - {self.arrival_time}"
@@ -52,16 +63,24 @@ class Route(models.Model):
     destination = models.ForeignKey("Airport", on_delete=models.CASCADE, blank=True, related_name="routes_as_destination")
     distance = models.IntegerField()
 
+    class Meta:
+        app_label = 'airport'
+
+
     def clean(self):
         if self.source == self.destination:
             raise ValidationError("Source and destination airports must be different")
 
-    # def __str__(self):
-    #     return f"{self.source.name} - {self.destination.closet_big_city}"
+    def __str__(self):
+        return f"{self.source.name} - {self.destination.closet_big_city}"
 
 class Airport(models.Model):
     name = models.CharField(max_length=50)
     closet_big_city = models.CharField(max_length=50)
+
+    class Meta:
+        app_label = 'airport'
+
 
     def __str__(self):
         return f"{self.name} {self.closet_big_city}"
@@ -71,6 +90,10 @@ class Ticket(models.Model):
     seat = models.IntegerField()
     flight = models.ForeignKey("Flight", on_delete=models.CASCADE, blank=True, related_name="tickets")
     order = models.ForeignKey("Order", on_delete=models.CASCADE, blank=True, related_name="tickets")
+
+    class Meta:
+        app_label = 'airport'
+
 
 
     @staticmethod
@@ -92,12 +115,14 @@ class Ticket(models.Model):
                     }
                 )
 
-    def __str__(self):
-        return f"{self.row} - {self.seat} - {self.flight}"
+    # def __str__(self):
+    #     return f"{self.row} - {self.seat}"
 
     class Meta:
         unique_together = (("row", "seat", "flight"),)
         ordering = ("row", "seat", "flight")
+        app_label = 'airport'
+
 
 
     def clean(self):
@@ -127,6 +152,8 @@ class Order(models.Model):
 
     class Meta:
         ordering = ("created_time",)
+        app_label = 'airport'
+
 
     def __str__(self):
         return f"{self.created_time}"

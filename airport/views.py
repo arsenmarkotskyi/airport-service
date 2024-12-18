@@ -161,6 +161,16 @@ class AirportViewSet(mixins.CreateModelMixin,
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
 
+class TicketViewSet(mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    GenericViewSet):
+    queryset = Ticket.objects.all()
+    serializer_class = TicketSerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+
+
+
 class OrderPagination(PageNumberPagination):
     page_size = 10
     max_page_size = 100
